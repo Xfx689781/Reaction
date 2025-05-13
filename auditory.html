@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Visual Reaction Time Test</title>
+  <title>Auditory Reaction Time Test</title>
   <style>
     body {
       font-family: sans-serif;
@@ -9,15 +9,10 @@
       margin-top: 40px;
       background-color: #f0f0f0;
     }
-    #visualBox {
-      width: 200px;
-      height: 200px;
-      background-color: gray;
-      margin: 20px auto;
-      line-height: 200px;
-      font-size: 20px;
-      color: white;
-      cursor: pointer;
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      margin: 10px;
     }
     table {
       margin: 0 auto;
@@ -31,8 +26,8 @@
 </head>
 <body>
 
-<h1>Visual Reaction Time Test</h1>
-<p>Click the box as soon as it turns green.</p>
+<h1>Auditory Reaction Time Test</h1>
+<p>Click the button as soon as you hear the beep sound.</p>
 
 <label>Name: </label><input type="text" id="name"><br><br>
 <label>Age: </label><input type="number" id="age"><br><br>
@@ -42,9 +37,10 @@
   <option value="Female">Female</option>
   <option value="Other">Other</option>
 </select><br><br>
-<button onclick="startTest()">Start Test</button>
 
-<div id="visualBox" onclick="boxClicked()">WAIT</div>
+<button onclick="startTest()">Start Test</button>
+<br><br>
+<button id="clickButton" onclick="clickNow()" disabled>Click When You Hear Beep</button>
 
 <h3 id="status"></h3>
 <table id="logTable" style="display:none;">
@@ -59,12 +55,14 @@
 </table>
 <button onclick="clearAll()">Clear All Records</button>
 
+<audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
 <script>
-  const box = document.getElementById('visualBox');
-  const logTable = document.getElementById('logTable');
-  const rankingTable = document.getElementById('rankingTable');
+  const clickButton = document.getElementById('clickButton');
   const status = document.getElementById('status');
+  const logTable = document.getElementById('logTable');
   const averageResult = document.getElementById('averageResult');
+  const beep = document.getElementById('beep');
 
   let trial = 0, times = [], startTime, timeout, waiting = false;
 
@@ -87,22 +85,21 @@
   }
 
   function nextRound() {
-    status.textContent = `Trial ${trial + 1}: Wait...`;
-    box.style.backgroundColor = "gray";
-    box.textContent = "WAIT";
+    status.textContent = `Trial ${trial + 1}: Wait for the beep...`;
     waiting = false;
+    clickButton.disabled = true;
 
     timeout = setTimeout(() => {
-      box.style.backgroundColor = "green";
-      box.textContent = "CLICK!";
+      beep.play();
       startTime = Date.now();
       waiting = true;
+      clickButton.disabled = false;
     }, Math.random() * 3000 + 2000);
   }
 
-  function boxClicked() {
+  function clickNow() {
     if (!waiting) {
-      status.textContent = "Too soon! Wait for green.";
+      status.textContent = "Too soon! Wait for the beep.";
       clearTimeout(timeout);
       setTimeout(nextRound, 1000);
       return;
@@ -111,6 +108,7 @@
     const rt = Date.now() - startTime;
     times.push(rt);
     trial++;
+
     const row = logTable.insertRow();
     row.insertCell(0).textContent = trial;
     row.insertCell(1).textContent = rt + " ms";
@@ -118,12 +116,11 @@
     if (trial < 5) {
       setTimeout(nextRound, 1000);
     } else {
+      clickButton.disabled = true;
       waiting = false;
-      box.textContent = "DONE";
-      box.style.backgroundColor = "gray";
+      status.textContent = "Test complete.";
       const avg = Math.round(times.reduce((a, b) => a + b) / times.length);
       averageResult.textContent = `Average Reaction Time: ${avg} ms`;
-      status.textContent = "Test complete.";
 
       const record = {
         name: document.getElementById('name').value,
@@ -137,19 +134,21 @@
     }
   }
 
-  function saveResult(result) {
-    let records = JSON.parse(localStorage.getItem('visualRecords')) || [];
-    records.push(result);
-    localStorage.setItem('visualRecords', JSON.stringify(records));
+  function saveResult(record) {
+    let records = JSON.parse(localStorage.getItem('auditoryRecords')) || [];
+    records.push(record);
+    localStorage.setItem('auditoryRecords', JSON.stringify(records));
   }
 
   function updateRanking() {
-    let records = JSON.parse(localStorage.getItem('visualRecords')) || [];
+    let records = JSON.parse(localStorage.getItem('auditoryRecords')) || [];
     records.sort((a, b) => a.average - b.average);
 
-    rankingTable.innerHTML = '<tr><th>Name</th><th>Age</th><th>Gender</th><th>Avg RT (ms)</th><th>Delete</th></tr>';
+    const table = document.getElementById('rankingTable');
+    table.innerHTML = '<tr><th>Name</th><th>Age</th><th>Gender</th><th>Avg RT (ms)</th><th>Delete</th></tr>';
+
     records.forEach((r, index) => {
-      const row = rankingTable.insertRow();
+      const row = table.insertRow();
       row.insertCell(0).textContent = r.name;
       row.insertCell(1).textContent = r.age;
       row.insertCell(2).textContent = r.gender;
@@ -162,22 +161,21 @@
   }
 
   function deleteRecord(index) {
-    let records = JSON.parse(localStorage.getItem('visualRecords')) || [];
+    let records = JSON.parse(localStorage.getItem('auditoryRecords')) || [];
     records.splice(index, 1);
-    localStorage.setItem('visualRecords', JSON.stringify(records));
+    localStorage.setItem('auditoryRecords', JSON.stringify(records));
     updateRanking();
   }
 
   function clearAll() {
     if (confirm("Delete all records?")) {
-      localStorage.removeItem('visualRecords');
+      localStorage.removeItem('auditoryRecords');
       updateRanking();
     }
   }
 
   window.onload = updateRanking;
 </script>
-<br><br>
-<a href="/auditory.html">Go next test</a>
+
 </body>
 </html>
