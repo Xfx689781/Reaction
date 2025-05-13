@@ -1,0 +1,68 @@
+<!-- visual-reaction-test.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Visual Reaction Time Test</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      background-color: #f0f0f0;
+      margin-top: 100px;
+    }
+    #box {
+      width: 300px;
+      height: 300px;
+      background-color: red;
+      margin: auto;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Visual Reaction Time Test</h1>
+  <p>Click the red box when it turns green.</p>
+  <div id="box"></div>
+  <p id="result"></p>
+
+  <script>
+    const box = document.getElementById('box');
+    const result = document.getElementById('result');
+    let startTime, timeout, clickedTooSoon = false;
+
+    function randomDelay() {
+      return Math.random() * 3000 + 2000; // 2-5 seconds
+    }
+
+    function startTest() {
+      box.style.backgroundColor = 'red';
+      result.textContent = '';
+      clickedTooSoon = false;
+
+      timeout = setTimeout(() => {
+        box.style.backgroundColor = 'green';
+        startTime = Date.now();
+      }, randomDelay());
+    }
+
+    box.addEventListener('click', () => {
+      if (box.style.backgroundColor === 'green') {
+        const reactionTime = Date.now() - startTime;
+        result.textContent = `Reaction Time: ${reactionTime} ms`;
+        clearTimeout(timeout);
+        setTimeout(startTest, 2000);
+      } else {
+        if (!clickedTooSoon) {
+          result.textContent = "Too soon! Wait for green.";
+          clearTimeout(timeout);
+          clickedTooSoon = true;
+          setTimeout(startTest, 2000);
+        }
+      }
+    });
+
+    startTest();
+  </script>
+</body>
+</html>
